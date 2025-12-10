@@ -10,102 +10,127 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # PAGE CONFIG
-st.set_page_config(page_title="Beauty AI Recommender",
-                   page_icon="💄",
-                   layout="wide")
-
-# CUSTOM CSS FOR BEAUTIFUL UI
 st.markdown("""
 <style>
 
 body {
-    background-color: #2E1F1A; /* Deep brown */
-    font-family: 'Segoe UI';
+    background: linear-gradient(135deg, #2E1F1A 0%, #241713 100%);
+    font-family: 'Segoe UI', sans-serif;
+    color: #F5E9E2;
 }
 
-/* Main container box */
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Main content box */
 .main-box {
-    background: #3B2A24; /* Soft brown */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     padding: 40px;
-    border-radius: 20px;
+    border-radius: 25px;
     width: 85%;
     margin: auto;
     margin-top: 40px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    animation: fadeIn 1s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
 }
 
 /* Title */
 h1 {
     text-align: center;
-    color: #E8D3C5;
-    font-weight: 800;
-    font-size: 48px;
+    color: #F5E9E2 !important;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 0 25px rgba(255, 200, 150, 0.35);
+    animation: fadeIn 1.2s ease;
 }
 
-/* Subtitle text */
+/* Subtitle */
 .subtitle {
     text-align: center;
-    color: #E8D3C5;
-    font-size: 18px;
-    margin-bottom: 25px;
+    color: #EED6C4;
+    font-size: 19px;
+    margin-bottom: 20px;
+    opacity: 0.9;
 }
 
-/* Upload area override */
-.css-1n76uvr {
-    max-width: 450px !important;
-}
-
-/* Reduce uploader box height */
-.stFileUploader > div:first-child {
-    padding: 10px !important;
-}
-
-/* Brown upload box */
+/* Upload box */
 .stFileUploader {
-    background-color: #4A362F !important;
-    border-radius: 14px;
-    padding: 8px;
+    background: rgba(255, 255, 255, 0.09) !important;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 0 0 12px rgba(255,255,255,0.12);
+    transition: 0.3s;
+}
+.stFileUploader:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(255,200,160, 0.25);
 }
 
-/* Product card */
-.product-card {
-    background: #4A362F;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 5px solid #C8A38D;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-}
-
-/* Hover effect */
-.product-card:hover {
-    transform: scale(1.01);
-    transition: 0.2s;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.35);
-}
-
-/* Skin badge */
+/* Skin Type Badge */
 .skin-badge {
-    background: #C8A38D;
-    color: black;
-    padding: 8px 14px;
-    border-radius: 12px;
-    font-size: 17px;
-    font-weight: 600;
+    background: linear-gradient(135deg, #C8A38D 0%, #e8c2aa 100%);
+    color: #3A2A22;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: bold;
     display: inline-block;
-    margin-top: 10px;
+    box-shadow: 0 0 15px rgba(200,150,120, 0.35);
+    animation: fadeIn 1.3s ease;
 }
 
-/* Confidence box */
+/* Confidence Box */
 .confidence-box {
-    background: #5A4038;
-    padding: 10px;
-    border-radius: 8px;
-    margin: 5px 0;
-    color: #FFEDE4;
+    background: rgba(255,255,255,0.08);
+    padding: 12px;
+    border-radius: 10px;
+    margin: 7px 0;
+    border-left: 4px solid #C8A38D;
+    color: #F7EBE4;
+    backdrop-filter: blur(6px);
+    animation: fadeIn 1.2s ease;
 }
+
+/* Product Card */
+.product-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    padding: 22px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    border-left: 6px solid #D6B1A2;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 3px 15px rgba(0,0,0,0.35);
+    animation: fadeIn 1.4s ease;
+    transition: 0.3s ease;
+}
+.product-card:hover {
+    transform: scale(1.025) translateY(-4px);
+    box-shadow: 0 8px 25px rgba(255,180,150,0.25);
+    border-left: 6px solid #E3C0B3;
+}
+
+/* Product title inside card */
+.product-card h3 {
+    color: #FFE9DC;
+    text-shadow: 0 0 12px rgba(255,200,150,0.25);
+}
+
+/* Divider customization */
+hr {
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
+
 
 # HEADER
 st.markdown("<h1>AI Skin Type Detector & Beauty Recommender</h1>", unsafe_allow_html=True)
