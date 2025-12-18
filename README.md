@@ -1,114 +1,106 @@
-**AI Skin Type Detection & Beauty Product Recommendation System**
-An end-to-end Machine Learning application that detects a user’s skin type from a face image and recommends suitable beauty products using a hybrid recommendation approach. The system is deployed using Streamlit for real-time interaction.
+### **AI Skin Type Detection & Beauty Product Recommendation **
 
+This is an **end-to-end Machine Learning application** that detects a user’s **skin type from a face image** and recommends **personalized beauty products**.  
+The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid Recommendation System**, all deployed using **Streamlit** for live interaction.
 
-**Project Features**
+---
 
-**->** Skin type classification from face images
+### **Features ✨**
+**->** Skin type detection from face images  
+**->** Deep learning model using EfficientNet  
+**->** Confidence-based skin type prediction  
+**->** Personalized beauty product recommendations  
+**->** Hybrid recommender (Skin type + Ingredients + Popularity)  
+**->** Interactive and user-friendly Streamlit UI  
 
-**->** Deep Learning model using EfficientNet
+---
 
-**->** Personalized beauty product recommendations
+### **Tech Stack 🛠️**
+- **Python**
+- **PyTorch**
+- **EfficientNet (CNN)**
+- **Pandas & NumPy**
+- **Scikit-learn**
+- **Streamlit**
+- **OpenCV**
+- **Matplotlib**
 
-**->** Hybrid recommender (Skin Type + Ingredients + Popularity)
+---
 
-**->** Interactive Streamlit web application
+### **Machine Learning Models Used**
 
+#### 🔹 Skin Type Classification
+- Model: **EfficientNet-B0**
+- Framework: **PyTorch**
+- Classes:
+  - acne-prone-skin
+  - dry-skin
+  - oily-skin
+  - healthy
+- Input: Face image
+- Output: Skin type + confidence score
 
-**Machine Learning Models Used**
+#### 🔹 Product Recommendation System
+- Approach: **Hybrid Recommendation**
+- Techniques:
+  - Skin type–based filtering
+  - Ingredient similarity using **TF-IDF**
+  - Popularity scoring using ratings and reviews
 
-**1️⃣ Skin Type Classification**
+---
 
-Model: EfficientNet-B0
+### **Dataset Used **
 
-Framework: PyTorch
+#### 🔹 Image Dataset
+- Face images categorized into 4 skin types
+- Used for training and validating the CNN model
 
-Classes:
+#### 🔹 Product Dataset
+- Cosmetic product details
+- Includes:
+  - Skin type
+  - Ingredients
+  - Price
+  - Rating
+  - Number of reviews
+  - Brand & category
 
-acne-prone-skin
+---
 
-dry-skin
+### **Data Preprocessing ⚙️**
 
-oily-skin
+#### 🔹 Image Data
+- Resized images to **224 × 224**
+- Normalized using ImageNet statistics
+- Data augmentation (rotation, flipping)
+- Train–validation split (80:20)
 
-healthy
+#### 🔹 Product Data
+- Missing value handling
+- Feature engineering (review score, popularity score)
+- Ingredient vectorization using **TF-IDF**
+- Price normalization
 
-Input: Face image
+---
 
-Output: Skin type + confidence scores
+### **How the System Works**
 
-**2️⃣ Product Recommendation System**
+1. User selects a skin type or uploads a face image
+2. Image is preprocessed and passed to the CNN model
+3. Skin type is predicted with confidence score
+4. Product recommender filters and ranks suitable products
+5. Results are displayed instantly using Streamlit
 
-Approach: Hybrid Recommendation
+---
 
-Techniques Used:
+### **Streamlit Interface **
+- Upload face / skin image
+- View detected skin type
+- Get top product recommendations
+- Interactive tables and charts
+- Optional card view for product details
 
-**->**Rule-based skin type filtering
+---
 
-**->**Ingredient similarity using TF-IDF
+### **Project Structure 📂**
 
-**->**Product popularity scoring (ratings & reviews)
-
-**🧪 Data Preprocessing**
-**🔹 Image Data**
-
-Resizing images to 224 × 224
-
-Normalization using ImageNet statistics
-
-Data augmentation (rotation & flipping)
-
-Train–validation split (80:20)
-
-**🔹 Product Data**
-
-Missing value handling
-
-Feature engineering (review score, popularity score)
-
-Price normalization
-
-Ingredient text vectorization using TF-IDF
-
-**⚙️ How It Works**
-
-User uploads a face image via Streamlit UI
-
-Image is preprocessed and passed to the CNN model
-
-Skin type is predicted using EfficientNet
-
-Product recommender filters and ranks suitable products
-
-Results are displayed in real time
-
-**🖥️ Streamlit Interface**
-
-Upload face image
-
-View predicted skin type
-
-Get personalized beauty product recommendations
-
-Interactive and user-friendly UI
-
-**🛠️ Tech Stack**
-
-Python
-
-PyTorch
-
-EfficientNet
-
-Scikit-learn
-
-Pandas & NumPy
-
-Streamlit
-
-Matplotlib
-
-
-Ingredient similarity using TF-IDF
-
-Product popularity scoring (ratings & reviews)
