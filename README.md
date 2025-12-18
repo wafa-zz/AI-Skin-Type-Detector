@@ -103,4 +103,18 @@ The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid R
 ---
 
 ### **Project Structure 📂**
-
+project/
+│
+├── 1_train_skin_type_model.ipynb
+├── test_model.ipynb
+├── 3_product_recommender.ipynb
+│
+├── streamlit_app/
+│ └── app.py
+│
+├── models/
+│ └── efficientnet_skin_classifier.pth
+│
+├── face/
+├── cosmetics_full_data.csv
+└── README.md
