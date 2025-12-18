@@ -1,4 +1,4 @@
-### **AI Skin Type Detection & Beauty Product Recommendation **
+### AI Skin Type Detection & Beauty Product Recommendation 
 
 This is an **end-to-end Machine Learning application** that detects a user’s **skin type from a face image** and recommends **personalized beauty products**.  
 The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid Recommendation System**, all deployed using **Streamlit** for live interaction.
@@ -49,7 +49,7 @@ The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid R
 
 ---
 
-### **Dataset Used **
+### Dataset Used 
 
 #### 🔹 Image Dataset
 - Face images categorized into 4 skin types
@@ -93,7 +93,7 @@ The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid R
 
 ---
 
-### **Streamlit Interface **
+### Streamlit Interface 
 - Upload face / skin image
 - View detected skin type
 - Get top product recommendations
