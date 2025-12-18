@@ -100,7 +100,3 @@ The project combines **Deep Learning**, **Data Preprocessing**, and a **Hybrid R
 - Interactive tables and charts
 - Optional card view for product details
 
-│
-├── face/
-├── cosmetics_full_data.csv
-└── README.md
