@@ -1,269 +1,387 @@
 import streamlit as st
+import numpy as np
+import pandas as pd
+import cv2
+from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms
-from PIL import Image
-import pandas as pd
-import numpy as np
 from efficientnet_pytorch import EfficientNet
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
 
 # PAGE CONFIG
-st.markdown("""
-<style>
+# --------------------------------------------------
+st.set_page_config(
+    page_title="AI Skin Type & Beauty Recommender",
+    layout="wide"
+)
+st.title("AI Skin Type & Beauty Recommender")
+st.markdown(
+    "Select your skin type and optionally upload a face or skin image for AI-assisted analysis."
+)
 
-body {
-    background: linear-gradient(135deg, #2E1F1A 0%, #241713 100%);
-    font-family: 'Segoe UI', sans-serif;
-    color: #F5E9E2;
-}
+# User skin type input 
+# --------------------------------------------------
+st.subheader("Select Your Skin Type")
 
-/* Smooth fade-in animation */
-@keyframes fadeIn {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
+USER_SKIN_TYPE = st.radio(
+    "This helps us give accurate recommendations",
+    [
+        "Dry",
+        "Oily",
+        "Combination",
+        "Sensitive",
+        "Acne-Prone",
+        "Normal"
+    ],
+    horizontal=True
+)
 
-/* Main content box */
-.main-box {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    padding: 40px;
-    border-radius: 25px;
-    width: 85%;
-    margin: auto;
-    margin-top: 40px;
-    animation: fadeIn 1s ease-in-out;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-}
-
-/* Title */
-h1 {
-    text-align: center;
-    color: #F5E9E2 !important;
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-shadow: 0 0 25px rgba(255, 200, 150, 0.35);
-    animation: fadeIn 1.2s ease;
-}
-
-/* Subtitle */
-.subtitle {
-    text-align: center;
-    color: #EED6C4;
-    font-size: 19px;
-    margin-bottom: 20px;
-    opacity: 0.9;
-}
-
-/* Upload box */
-.stFileUploader {
-    background: rgba(255, 255, 255, 0.09) !important;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: inset 0 0 12px rgba(255,255,255,0.12);
-    transition: 0.3s;
-}
-.stFileUploader:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(255,200,160, 0.25);
-}
-
-/* Skin Type Badge */
-.skin-badge {
-    background: linear-gradient(135deg, #C8A38D 0%, #e8c2aa 100%);
-    color: #3A2A22;
-    padding: 10px 20px;
-    border-radius: 14px;
-    font-size: 18px;
-    font-weight: bold;
-    display: inline-block;
-    box-shadow: 0 0 15px rgba(200,150,120, 0.35);
-    animation: fadeIn 1.3s ease;
-}
-
-/* Confidence Box */
-.confidence-box {
-    background: rgba(255,255,255,0.08);
-    padding: 12px;
-    border-radius: 10px;
-    margin: 7px 0;
-    border-left: 4px solid #C8A38D;
-    color: #F7EBE4;
-    backdrop-filter: blur(6px);
-    animation: fadeIn 1.2s ease;
-}
-
-/* Product Card */
-.product-card {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(12px);
-    padding: 22px;
-    border-radius: 18px;
-    margin-bottom: 18px;
-    border-left: 6px solid #D6B1A2;
-    border-top: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 3px 15px rgba(0,0,0,0.35);
-    animation: fadeIn 1.4s ease;
-    transition: 0.3s ease;
-}
-.product-card:hover {
-    transform: scale(1.025) translateY(-4px);
-    box-shadow: 0 8px 25px rgba(255,180,150,0.25);
-    border-left: 6px solid #E3C0B3;
-}
-
-/* Product title inside card */
-.product-card h3 {
-    color: #FFE9DC;
-    text-shadow: 0 0 12px rgba(255,200,150,0.25);
-}
-
-/* Divider customization */
-hr {
-    border-color: rgba(255,255,255,0.15) !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
-# HEADER
-st.markdown("<h1>AI Skin Type Detector & Beauty Recommender</h1>", unsafe_allow_html=True)
-st.write("Upload your face photo to detect your skin type and get smart product recommendations.")
+USER_SKIN_TYPE = USER_SKIN_TYPE.lower()
 
 
 # LOAD MODEL
+# --------------------------------------------------
 @st.cache_resource
 def load_model():
     model = EfficientNet.from_name("efficientnet-b0")
-    num_features = model._fc.in_features
-    model._fc = nn.Linear(num_features, 4)
-    model.load_state_dict(torch.load("../models/efficientnet_skin_classifier.pth",
-                                     map_location=torch.device("cpu")))
+    model._fc = nn.Linear(model._fc.in_features, 4)
+    model.load_state_dict(
+        torch.load(
+            "/Users/Admin/Desktop/project/models/efficientnet_skin_classifier.pth",
+            map_location=torch.device("cpu")
+        )
+    )
     model.eval()
     return model
 
 model = load_model()
+
 class_names = ["acne-prone-skin", "dry-skin", "oily-skin", "healthy"]
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
 ])
 
+# --------------------------------------------------
+# SKIN DETECTION (HSV fallback)
+# --------------------------------------------------
+def detect_skin(image_bgr):
+    hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
+    lower = np.array([0, 20, 70], dtype=np.uint8)
+    upper = np.array([20, 255, 255], dtype=np.uint8)
+    mask = cv2.inRange(hsv, lower, upper)
+    skin_ratio = np.sum(mask > 0) / mask.size
+    return skin_ratio > 0.02
+
+# --------------------------------------------------
+# FACE / SKIN VALIDATION
+# --------------------------------------------------
+def is_valid_skin_image(image_bgr):
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
+
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+
+    faces = face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.02,
+        minNeighbors=2,
+        minSize=(15, 15)
+    )
+
+    if len(faces) > 0:
+        return True
+
+    return detect_skin(image_bgr)
+
+# --------------------------------------------------
+# SKIN TYPE PREDICTION (AI)
+# --------------------------------------------------
 def predict_skin_type(img_pil):
+    img_np = np.array(img_pil)
+    img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+    if not is_valid_skin_image(img_bgr):
+        return None, None, False
+
     img_tensor = transform(img_pil).unsqueeze(0)
 
     with torch.no_grad():
         output = model(img_tensor)
         probs = torch.softmax(output, dim=1)[0]
 
-    pred_idx = torch.argmax(probs).item()
-    return class_names[pred_idx], probs.numpy()
+    idx = torch.argmax(probs).item()
+    
+    # Map AI prediction to user-friendly format
+    ai_skin_raw = class_names[idx]
+    ai_skin_mapped = ai_skin_raw.replace("-skin", "").replace("-", "-")
+    
+    return ai_skin_mapped, probs[idx].item() * 100, True
 
-
-# LOAD PRODUCT DATA + RECOMMENDER
+# --------------------------------------------------
+# LOAD DATA
+# --------------------------------------------------
 @st.cache_resource
 def load_data():
-    df = pd.read_csv("/Users/Admin/Desktop/project/cosmetics_full_data.csv")
+    df = pd.read_csv("/Users/Admin/Desktop/project/data/cosmetics_full_data.csv")
+    df["Skin_Type"] = df["Skin_Type"].fillna("").str.lower()
+    return df
 
-    def extract_number(x):
-        if isinstance(x, str):
-            num = ''.join([c for c in x if c.isdigit() or c == '.'])
-            return float(num) if num else np.nan
-        return np.nan
+df = load_data()
 
-    df["Product_Size"] = df["Product_Size"].apply(extract_number)
-    df = df.drop_duplicates()
-
-    num_cols = ["Price_USD", "Rating", "Number_of_Reviews", "Product_Size"]
-    for col in num_cols:
-        df[col] = df[col].astype(float).fillna(df[col].median())
-
-    df["Skin_Type"] = df["Skin_Type"].fillna("Unknown")
-    df["Main_Ingredient"] = df["Main_Ingredient"].fillna("")
-
-    df["Cruelty_Score"] = df["Cruelty_Free"].apply(lambda x: 1 if str(x).lower() == "yes" else 0)
-    df["Price_Score"] = (df["Price_USD"].max() - df["Price_USD"]) / df["Price_USD"].max()
-
-    tfidf = TfidfVectorizer(stop_words="english")
-    ingredient_matrix = tfidf.fit_transform(df["Main_Ingredient"])
-
-    return df, ingredient_matrix
-
-df, ingredient_matrix = load_data()
+# --------------------------------------------------
+# SKIN TYPE MAPPING (DATASET)
+# --------------------------------------------------
+SKIN_TYPE_MAP = {
+    "dry": ["dry"],
+    "oily": ["oily"],
+    "combination": ["combination", "oily"],
+    "sensitive": ["sensitive"],
+    "acne-prone": ["acne", "acne prone", "oily"],
+    "acne": ["acne", "acne prone", "oily"],
+    "normal": ["normal", "all"],
+    "healthy": ["normal", "all"]
+}
 
 
-def recommend_products_optimized(skin_type, top_n=10):
-    user_skin = skin_type.lower()
-    df["Skin_Match_Score"] = df["Skin_Type"].apply(lambda x: 1 if str(x).lower() in user_skin else 0)
-
-    skin_products = df[df["Skin_Type"].str.lower().str.contains(user_skin)]
-
-    if len(skin_products) > 0:
-        avg_vector = ingredient_matrix[skin_products.index].mean(axis=0)
-        df["Ingredient_Similarity"] = cosine_similarity(ingredient_matrix, avg_vector)
-    else:
-        df["Ingredient_Similarity"] = 0
-
-    df["Review_Score"] = np.log1p(df["Number_of_Reviews"])
-
-    df["Popularity_Score"] = (
-        df["Rating"] * 0.5 +
-        df["Review_Score"] * 0.3 +
-        df["Cruelty_Score"] * 0.1
-    )
-
-    df["Final_Score"] = (
-        df["Popularity_Score"] * 0.5 +
-        df["Ingredient_Similarity"] * 0.3 +
-        df["Skin_Match_Score"] * 0.2
-    )
-
-    return df.sort_values("Final_Score", ascending=False).head(top_n)
-
-
-# UPLOAD IMAGE
-uploaded_img = st.file_uploader("Upload your face image", type=["jpg", "jpeg", "png"])
-
-if uploaded_img:
-    img_pil = Image.open(uploaded_img).convert("RGB")
-
-    st.image(img_pil, caption="Your Uploaded Image", width=300)
-
-    st.subheader("🔍 Skin Type Detection")
+# --------------------------------------------------
+# SIMPLE RECOMMENDER (BY SKIN TYPE)
+# --------------------------------------------------
+def recommend_products(skin_type, top_n=10):
+    """
+    Get products for a specific skin type
+    """
+    keywords = SKIN_TYPE_MAP.get(skin_type, [skin_type])
     
-    skin_type, probs = predict_skin_type(img_pil)
+    mask = df["Skin_Type"].apply(
+        lambda x: any(k in x for k in keywords)
+    )
+    
+    filtered = df[mask]
+    
+    if filtered.empty:
+        return pd.DataFrame()
+    
+    filtered = filtered.sort_values(
+        ["Rating", "Number_of_Reviews"],
+        ascending=False
+    )
+    
+    return filtered[[
+        "Product_Name",
+        "Brand",
+        "Category",
+        "Price_USD",
+        "Rating",
+        "Number_of_Reviews",
+        "Main_Ingredient",
+        "Skin_Type"
+    ]].head(top_n)
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
+with st.sidebar:
+    st.header("🧾 View Options")
+    show_cards = st.toggle("Show Card View", value=False)
+    
+    st.markdown("---")
+    st.subheader("📊 Recommendation Logic")
+    st.markdown("""
+    - **User Selection**: Primary preference
+    - **AI Detection**: Secondary guidance
+    - **Hybrid Mode**: Combines both for best results
+    """)
 
-    st.markdown(f"<div class='skin-badge'>Predicted Skin Type: <b>{skin_type.upper()}</b></div>", unsafe_allow_html=True)
+# --------------------------------------------------
+# IMAGE UPLOAD (OPTIONAL)
+# --------------------------------------------------
+uploaded_file = st.file_uploader(
+    "Optional: Upload face / skin image (AI assist)",
+    type=["jpg", "jpeg", "png"]
+)
 
-    st.write("### Confidence Levels")
-    for i, cls in enumerate(class_names):
-        st.markdown(f"<div class='confidence-box'><b>{cls}</b>: {probs[i]:.4f}</div>", unsafe_allow_html=True)
+ai_skin = None
+confidence = None
 
-    st.divider()
+if uploaded_file:
+    image = Image.open(uploaded_file).convert("RGB")
 
-    # PRODUCT RECOMMENDATIONS
-    st.markdown("## ✨ Recommended Products Just For You")
+    col1, col2 = st.columns(2)
 
-    recommended = recommend_products_optimized(skin_type)
+    with col1:
+        st.image(image, caption="Uploaded Image", width=320)
 
-    for _, row in recommended.iterrows():
+    with col2:
+        with st.spinner("AI analyzing image..."):
+            ai_skin, confidence, valid = predict_skin_type(image)
+
+        if valid:
+            st.success(
+                f"AI Detected: **{ai_skin.replace('-', ' ').title()} Skin**"
+            )
+            st.info(f"Confidence: {confidence:.2f}%")
+            
+            # Show comparison if different
+            if ai_skin != USER_SKIN_TYPE:
+                st.warning(
+                    f"Your selection: **{USER_SKIN_TYPE.title()}**\n\n"
+                    f"AI detected: **{ai_skin.title()}**\n\n"
+                    "We'll combine both for better recommendations!"
+                )
+        else:
+            st.warning(
+                "⚠️ AI could not reliably detect skin. "
+                "Using your selected skin type only."
+            )
+            ai_skin = None
+            
+# --------------------------------------------------
+# SKIN TYPE SELECTOR (if AI detected something different)
+# --------------------------------------------------
+st.markdown("---")
+# Determine which skin types are available
+available_skin_types = [USER_SKIN_TYPE]
+skin_type_labels = [f"🟢 {USER_SKIN_TYPE.title()} (Your Selection)"]
+if ai_skin and ai_skin != USER_SKIN_TYPE:
+    available_skin_types.append(ai_skin)
+    skin_type_labels.append(f"🔵 {ai_skin.title()} (AI Detected)")
+# Show selector if we have multiple options
+if len(available_skin_types) > 1:
+    st.subheader("Choose Skin Type for Recommendations")
+    
+    selected_skin_index = st.radio(
+        "Select which skin type recommendations you want to see:",
+        range(len(available_skin_types)),
+        format_func=lambda x: skin_type_labels[x],
+        horizontal=True
+    )
+    
+    selected_skin_type = available_skin_types[selected_skin_index]
+    
+    # Show helpful info
+    if selected_skin_index == 0:
+        st.info(f"💡 Showing products for **{USER_SKIN_TYPE.title()}** skin based on your selection")
+    else:
+        st.info(f"💡 Showing products for **{ai_skin.title()}** skin based on AI analysis")
+else:
+    selected_skin_type = USER_SKIN_TYPE
+    st.subheader(f"Recommended Products for **{USER_SKIN_TYPE.title()} Skin**")
+    
+    
+# --------------------------------------------------
+# GET RECOMMENDATIONS FOR SELECTED SKIN TYPE
+# --------------------------------------------------
+recommendations = recommend_products(selected_skin_type, top_n=10)
+if recommendations.empty:
+    st.warning(f"⚠️ No products found for {selected_skin_type.title()} skin type.")
+    
+    # Suggest checking the other skin type
+    if len(available_skin_types) > 1:
+        other_skin = available_skin_types[1 - selected_skin_index]
+        st.info(f"💡 Try viewing recommendations for **{other_skin.title()}** skin instead!")
+else:
+    # Show product count
+    st.success(f"Found **{len(recommendations)}** products for {selected_skin_type.title()} skin")
+    
+    # Display products table
+    st.dataframe(
+        recommendations.reset_index(drop=True),
+        use_container_width=True,
+        height=420
+    )
+    # Statistics
+    st.markdown("---")
+    st.subheader("Product Statistics")
+    colA, colB, colC = st.columns(3)
+    
+    with colA:
+        st.metric("Total Products", len(recommendations))
+    with colB:
+        avg_price = recommendations['Price_USD'].mean()
+        st.metric("Average Price", f"${avg_price:.2f}")
+    with colC:
+        avg_rating = recommendations['Rating'].mean()
+        st.metric("Average Rating", f"{avg_rating:.2f} ⭐")
+    # Category breakdown
+    st.markdown("---")
+    st.subheader("📦 Products by Category")
+    
+    category_counts = recommendations['Category'].value_counts()
+    col_cat1, col_cat2 = st.columns(2)
+    
+    with col_cat1:
+        st.bar_chart(category_counts)
+    
+    with col_cat2:
+        for category, count in category_counts.items():
+            st.write(f"**{category}**: {count} products")
+    # Card view
+    if show_cards:
+        st.markdown("---")
+        st.subheader("🛍 Product Details")
+        
+        # Group by category
+        for category in recommendations['Category'].unique():
+            with st.expander(f"📦 {category} ({len(recommendations[recommendations['Category'] == category])} products)"):
+                category_products = recommendations[recommendations['Category'] == category]
+                
+                for idx, row in category_products.iterrows():
+                    col_prod1, col_prod2 = st.columns([2, 1])
+                    
+                    with col_prod1:
+                        st.markdown(f"""
+                        ### {row['Product_Name']}
+                        🏷️ **Brand**: {row['Brand']}  
+                        🧪 **Key Ingredient**: {row['Main_Ingredient']}  
+                        🎯 **Suitable for**: {row['Skin_Type'].title()}
+                        """)
+                    
+                    with col_prod2:
+                        st.metric("Price", f"${row['Price_USD']}")
+                        st.metric("Rating", f"{row['Rating']} ⭐")
+                        st.caption(f"{row['Number_of_Reviews']} reviews")
+                    
+                    st.markdown("---")
+# --------------------------------------------------
+# QUICK SWITCH BUTTON
+# --------------------------------------------------
+if len(available_skin_types) > 1:
+    st.markdown("---")
+    
+    other_index = 1 - selected_skin_index
+    other_skin = available_skin_types[other_index]
+    
+    col_switch1, col_switch2, col_switch3 = st.columns([1, 2, 1])
+    
+    with col_switch2:
+        if st.button(
+            f"🔄 Switch to {other_skin.title()} Recommendations",
+            use_container_width=True,
+            type="primary"
+        ):
+            st.info(f"Please select **{skin_type_labels[other_index]}** above to view those recommendations")
+            st.rerun()
+            
+
+# --------------------------------------------------
+# ADDITIONAL INSIGHTS
+# --------------------------------------------------
+if ai_skin and ai_skin != USER_SKIN_TYPE:
+    with st.expander("💡 Why these recommendations?"):
         st.markdown(f"""
-        <div class="product-card">
-            <h3>{row['Product_Name']}</h3>
-            <b>Brand:</b> {row['Brand']} <br>
-            <b>Category:</b> {row['Category']} <br>
-            <b>Price:</b> 💵 ${row['Price_USD']} <br>
-            <b>Rating:</b> ⭐ {row['Rating']} <br>
-            <b>Reviews:</b> {row['Number_of_Reviews']} <br>
-            <b>Main Ingredient:</b> {row['Main_Ingredient']} <br>
-        </div>
-        """, unsafe_allow_html=True)
+        Our AI detected **{ai_skin.title()} skin** characteristics, while you selected **{USER_SKIN_TYPE.title()}**.
+        
+        This could mean:
+        - You have **combination skin** with traits of both types
+        - Your skin condition varies by zone (T-zone vs cheeks)
+        - Seasonal or environmental factors affect your skin
+        
+        **Our hybrid recommendations** include products suitable for both conditions to give you more options!
+        """)

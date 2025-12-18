@@ -1,6 +1,10 @@
-venv/
+# Python
 __pycache__/
-*.pth
-*.pt
+*.pyc
+*.pyo
+venv/
+.env/
 .DS_Store
-.env
+.streamlit/
+*.h5
+*.pth
