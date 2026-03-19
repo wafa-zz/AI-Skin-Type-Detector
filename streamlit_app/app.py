@@ -123,35 +123,42 @@ if skin_type:
 
     dataset_skin = mapping.get(skin_type, skin_type)
 
-    # Filter dataset
     filtered = df[df["Skin_Type"].str.lower() == dataset_skin.lower()]
 
-    # Sort by rating (best first)
+    # Sort by rating
     filtered = filtered.sort_values(by="Rating", ascending=False)
 
     if filtered.empty:
         st.warning("No products found for this skin type.")
     else:
-        for _, item in filtered.head(10).iterrows():
+        st.dataframe(
+            filtered[[
+                "Product_Name",
+                "Brand",
+                "Category",
+                "Price_USD",
+                "Rating",
+                "Number_of_Reviews"
+            ]],
+            use_container_width=True
+        )
 
-            st.markdown(f"""
-            <div style="
-                background:#111;
-                padding:16px;
-                border-radius:12px;
-                margin-bottom:12px;
-                border:1px solid #333;
-            ">
-                <h4>{item['Product_Name']}</h4>
-                <p><b>Brand:</b> {item['Brand']}</p>
-                <p><b>Category:</b> {item['Category']}</p>
-                <p><b>Price:</b> ${item['Price_USD']}</p>
-                <p><b>Rating:</b> ⭐ {item['Rating']} ({item['Number_of_Reviews']} reviews)</p>
-                <p><b>Main Ingredient:</b> {item['Main_Ingredient']}</p>
-                <p><b>Usage:</b> {item['Usage_Frequency']}</p>
-                <p><b>Country:</b> {item['Country_of_Origin']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+
+# ================================
+# CHARTS SECTION
+# ================================
+st.markdown("### 📊 Price Analysis")
+
+st.bar_chart(
+    filtered.set_index("Product_Name")["Price_USD"]
+)
+
+st.markdown("### ⭐ Rating Analysis")
+
+st.bar_chart(
+    filtered.set_index("Product_Name")["Rating"]
+)
+
 
 # ==================================================
 # FOOTER
