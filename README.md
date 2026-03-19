@@ -113,6 +113,3 @@ The project combines **Computer Vision(CNN)** and a **rule-based recommendation 
   - Real-world AI application development
   - Integration of ML model + recommendation system
   - Deployment using Streamlit
-
-
-change this based on my updation, if something we can do more to my project please recomment
