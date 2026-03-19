@@ -1,9 +1,8 @@
 streamlit
-pillow
-torch
-torchvision
-pandas
+tensorflow
 numpy
+pandas
+pillow
+matplotlib
+seaborn
 scikit-learn
-sentence-transformers
-faiss-cpu
