@@ -6,8 +6,8 @@ The project combines **Computer Vision(CNN)** and a **rule-based recommendation 
 ---
 
 ### **✨Features**
-**📸**Skin type detection from face images (AI-based)
-**✍️**Manual skin type selection option
+**->**📸Skin type detection from face images (AI-based)
+**->**✍️Manual skin type selection option
 🧠Deep learning model using EfficientNet (Transfer Learning)
 📊Confidence-based prediction with probability scores  
 🎯Product recommendations based on skin type 
